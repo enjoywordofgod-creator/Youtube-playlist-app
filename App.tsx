@@ -5,7 +5,16 @@ import VideoPlayer from "./components/VideoPlayer";
 import Admin from "./components/Admin";
 import { useLanguage } from "./LanguageContext";
 import { Message, DailyVerse, Playlist } from "./types";
-import { fetchYouTubePlaylist, getMockVideos } from "./services/youtubeService";
+import { fetchYouTubePlaylist } from "./services/youtubeService";
+
+/* ===============================
+   PUT YOUR YOUTUBE SETTINGS HERE
+================================ */
+
+const YOUTUBE_API_KEY = "AIzaSyDYDcdAHtSCudlMcZc82IeMAT3msXnO_2E";
+const PLAYLIST_ID = "PLHDAYT3bOm5l0qqszuRM8rbqPRdRIyzPT";
+
+/* =============================== */
 
 const App: React.FC = () => {
 
@@ -20,25 +29,18 @@ const [searchQuery, setSearchQuery] = useState("");
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
 
-const fetchData = React.useCallback(async (useMock = false) => {
+/* FETCH YOUTUBE DATA */
 
-const apiKey = localStorage.getItem("YOUTUBE_API_KEY");
-const playlistId = localStorage.getItem("PLAYLIST_ID");
-
-if (!apiKey || !playlistId) {
-if (!useMock) {
-setLoading(false);
-return;
-}
-}
+const fetchData = React.useCallback(async () => {
 
 try {
 
 setError(null);
 
-const youtubeVideos = useMock
-? getMockVideos()
-: await fetchYouTubePlaylist(playlistId || "", apiKey || "");
+const youtubeVideos = await fetchYouTubePlaylist(
+PLAYLIST_ID,
+YOUTUBE_API_KEY
+);
 
 const transformedMessages: Message[] = youtubeVideos.map((v) => ({
 id: v.id,
@@ -77,10 +79,11 @@ setLoading(false);
 
 }, [language]);
 
+/* LOAD DATA */
+
 useEffect(() => {
 
-const isDemo = localStorage.getItem("DEMO_MODE") === "true";
-fetchData(isDemo);
+fetchData();
 
 setDailyVerse({
 verse:
@@ -92,6 +95,8 @@ reference: language === "ta" ? "சங்கீதம் 23:1" : "Psalm 23:1",
 
 }, [language, fetchData]);
 
+/* CLICK HANDLERS */
+
 const handleMessageClick = (msg: Message) => {
 navigate(`/message/${msg.id}`);
 };
@@ -99,6 +104,8 @@ navigate(`/message/${msg.id}`);
 const goBack = () => {
 navigate(-1);
 };
+
+/* SEARCH */
 
 const filteredMessages = useMemo(() => {
 
@@ -111,7 +118,9 @@ msg.title.toLowerCase().includes(query)
 
 }, [searchQuery, messages]);
 
-const renderHome = () => (
+/* HOME PAGE */
+
+const renderHome = (
 
 <div className="px-6 py-4 space-y-8">
 
@@ -181,7 +190,6 @@ return (
 
 <Routes>
 
-{/* HOME */}
 <Route
 path="/"
 element={
@@ -192,12 +200,11 @@ onMessageClick={(msg) => navigate(`/message/${msg.id}`)}
 searchQuery={searchQuery}
 onSearchChange={setSearchQuery}
 >
-{renderHome()}
+{renderHome}
 </Layout>
 }
 />
 
-{/* PLAYLIST */}
 <Route
 path="/playlist/:id"
 element={
@@ -212,23 +219,20 @@ onMessageClick={(msg) => navigate(`/message/${msg.id}`)}
 }
 />
 
-{/* VIDEO PLAYER */}
 <Route
 path="/message/:id"
 element={<MessagePage messages={messages} />}
 />
 
-{/* ADMIN PAGE */}
-<Route
-path="/admin"
-element={<Admin />}
-/>
+<Route path="/admin" element={<Admin />} />
 
 </Routes>
 
 );
 
 };
+
+/* PLAYLIST PAGE */
 
 const PlaylistPage: React.FC<{ messages: Message[]; playlists: Playlist[] }> = ({
 messages,
@@ -276,6 +280,8 @@ className="w-full text-left bg-white border rounded-xl p-4 flex gap-4"
 );
 
 };
+
+/* VIDEO PAGE */
 
 const MessagePage: React.FC<{ messages: Message[] }> = ({ messages }) => {
 
