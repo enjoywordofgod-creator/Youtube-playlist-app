@@ -5,7 +5,6 @@ import VideoPlayer from "./components/VideoPlayer";
 import Admin from "./components/Admin";
 import { useLanguage } from "./LanguageContext";
 import { Message, DailyVerse, Playlist } from "./types";
-import { Music, Info as InfoIcon } from "lucide-react";
 import { fetchYouTubePlaylist, getMockVideos } from "./services/youtubeService";
 
 const App: React.FC = () => {
@@ -112,66 +111,42 @@ msg.title.toLowerCase().includes(query)
 
 }, [searchQuery, messages]);
 
-const renderHome = () => {
-
-return (
+const renderHome = () => (
 
 <div className="px-6 py-4 space-y-8">
 
 {dailyVerse && (
-
 <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-lg">
-
 <h3 className="text-indigo-200 text-xs font-bold uppercase mb-2">
 {t.dailyVerse}
 </h3>
-
 <p className="text-lg italic">"{dailyVerse.verse}"</p>
-
 <p className="mt-2 text-sm">— {dailyVerse.reference}</p>
-
 </div>
-
 )}
 
 {!searchQuery && playlists.length > 0 && (
-
 <div className="space-y-4">
-
 <h3 className="text-lg font-bold">{t.playlists}</h3>
 
 <div className="flex gap-4 overflow-x-auto">
 
 {playlists.map((pl) => (
-
 <button
 key={pl.id}
 onClick={() => navigate(`/playlist/${pl.id}`)}
 className="w-40"
 >
-
-<img
-src={pl.thumbnail}
-className="rounded-xl"
-alt=""
-/>
-
-<h4 className="font-bold text-sm mt-2">
-{pl.title}
-</h4>
-
+<img src={pl.thumbnail} className="rounded-xl" alt="" />
+<h4 className="font-bold text-sm mt-2">{pl.title}</h4>
 </button>
-
 ))}
 
 </div>
-
 </div>
-
 )}
 
 <div className="space-y-4">
-
 <h3 className="text-lg font-bold">{t.messages}</h3>
 
 {loading ? (
@@ -184,20 +159,13 @@ onClick={() => handleMessageClick(msg)}
 className="w-full text-left bg-white border rounded-2xl p-4 flex gap-4"
 >
 
-<img
-src={msg.thumbnail}
-className="w-16 h-16 rounded-xl"
-alt=""
-/>
+<img src={msg.thumbnail} className="w-16 h-16 rounded-xl" alt="" />
 
 <div>
-
 <h4 className="font-bold">{msg.title}</h4>
-
 <p className="text-sm text-gray-500">
 {msg.duration} • {msg.date}
 </p>
-
 </div>
 
 </button>
@@ -207,15 +175,13 @@ alt=""
 </div>
 
 </div>
-
 );
-
-};
 
 return (
 
 <Routes>
 
+{/* HOME */}
 <Route
 path="/"
 element={
@@ -226,13 +192,12 @@ onMessageClick={(msg) => navigate(`/message/${msg.id}`)}
 searchQuery={searchQuery}
 onSearchChange={setSearchQuery}
 >
-
 {renderHome()}
-
 </Layout>
 }
 />
 
+{/* PLAYLIST */}
 <Route
 path="/playlist/:id"
 element={
@@ -242,18 +207,18 @@ onBack={goBack}
 latestMessages={messages}
 onMessageClick={(msg) => navigate(`/message/${msg.id}`)}
 >
-
 <PlaylistPage messages={messages} playlists={playlists} />
-
 </Layout>
 }
 />
 
+{/* VIDEO PLAYER */}
 <Route
 path="/message/:id"
 element={<MessagePage messages={messages} />}
 />
 
+{/* ADMIN PAGE */}
 <Route
 path="/admin"
 element={<Admin />}
@@ -285,9 +250,7 @@ return (
 
 <div className="px-6 py-4 space-y-4">
 
-<h2 className="text-2xl font-bold">
-{playlist.title}
-</h2>
+<h2 className="text-2xl font-bold">{playlist.title}</h2>
 
 {playlistMessages.map((msg) => (
 
@@ -297,22 +260,11 @@ onClick={() => navigate(`/message/${msg.id}`)}
 className="w-full text-left bg-white border rounded-xl p-4 flex gap-4"
 >
 
-<img
-src={msg.thumbnail}
-className="w-14 h-14 rounded-lg"
-alt=""
-/>
+<img src={msg.thumbnail} className="w-14 h-14 rounded-lg" alt="" />
 
 <div>
-
-<h4 className="font-bold">
-{msg.title}
-</h4>
-
-<p className="text-xs">
-{msg.duration}
-</p>
-
+<h4 className="font-bold">{msg.title}</h4>
+<p className="text-xs">{msg.duration}</p>
 </div>
 
 </button>
