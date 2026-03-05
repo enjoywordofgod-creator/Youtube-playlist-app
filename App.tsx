@@ -1,25 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Routes, Route, useNavigate, useLocation, useParams } from "react-router-dom";
+import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import Layout from "./components/Layout";
 import VideoPlayer from "./components/VideoPlayer";
 import Admin from "./components/Admin";
 import { useLanguage } from "./LanguageContext";
 import { Message, DailyVerse, Playlist } from "./types";
+import { supabase } from "./supabase";
 import { fetchYouTubePlaylist } from "./services/youtubeService";
 
-/* ===============================
-   PUT YOUR YOUTUBE SETTINGS HERE
-================================ */
-
-const YOUTUBE_API_KEY = "AIzaSyDYDcdAHtSCudlMcZc82IeMAT3msXnO_2E";
-const PLAYLIST_ID = "PLHDAYT3bOm5l0qqszuRM8rbqPRdRIyzPT";
-
-/* =============================== */
+const YOUTUBE_API_KEY = "PASTE_YOUR_API_KEY_HERE";
 
 const App: React.FC = () => {
 
 const navigate = useNavigate();
-const location = useLocation();
 const { t, language } = useLanguage();
 
 const [messages, setMessages] = useState<Message[]>([]);
@@ -27,22 +20,38 @@ const [playlists, setPlaylists] = useState<Playlist[]>([]);
 const [dailyVerse, setDailyVerse] = useState<DailyVerse | null>(null);
 const [searchQuery, setSearchQuery] = useState("");
 const [loading, setLoading] = useState(true);
-const [error, setError] = useState<string | null>(null);
 
-/* FETCH YOUTUBE DATA */
+/* ---------------- LOAD PLAYLISTS FROM SUPABASE ---------------- */
 
-const fetchData = React.useCallback(async () => {
+const loadPlaylists = async () => {
 
-try {
+const { data } = await supabase
+.from("playlists")
+.select("*")
+.order("id", { ascending: false });
 
-setError(null);
+if (!data || data.length === 0) {
+setLoading(false);
+return;
+}
 
-const youtubeVideos = await fetchYouTubePlaylist(
-PLAYLIST_ID,
+/* convert playlist links → playlist ids */
+
+const playlistIds = data
+.map((p) => {
+const match = p.playlist_url.match(/list=([^&]+)/);
+return match ? match[1] : null;
+})
+.filter(Boolean);
+
+/* load videos from first playlist */
+
+const videos = await fetchYouTubePlaylist(
+playlistIds[0],
 YOUTUBE_API_KEY
 );
 
-const transformedMessages: Message[] = youtubeVideos.map((v) => ({
+const transformed: Message[] = videos.map((v) => ({
 id: v.id,
 title: v.title,
 videoId: v.videoId,
@@ -53,37 +62,26 @@ createdAt: v.createdAt,
 videoUrl: `https://www.youtube.com/watch?v=${v.videoId}`,
 }));
 
-setMessages(transformedMessages);
+setMessages(transformed);
 
 setPlaylists([
 {
 id: "main",
-title: language === "ta" ? "அனைத்து செய்திகள்" : "All Messages",
-description:
-language === "ta"
-? "யூடியூப் பிளேலிஸ்ட்டிலிருந்து தானாகவே எடுக்கப்பட்டது"
-: "Automatically fetched from YouTube playlist",
-thumbnail: transformedMessages[0]?.thumbnail || "",
-messageIds: transformedMessages.map((m) => m.id),
+title: "Messages",
+description: "Loaded from YouTube Playlist",
+thumbnail: transformed[0]?.thumbnail || "",
+messageIds: transformed.map((m) => m.id),
 },
 ]);
 
-} catch (err) {
-
-const msg = err instanceof Error ? err.message : "Failed to fetch data";
-setError(msg);
-
-} finally {
 setLoading(false);
-}
+};
 
-}, [language]);
-
-/* LOAD DATA */
+/* ---------------- LOAD DATA ---------------- */
 
 useEffect(() => {
 
-fetchData();
+loadPlaylists();
 
 setDailyVerse({
 verse:
@@ -93,82 +91,55 @@ language === "ta"
 reference: language === "ta" ? "சங்கீதம் 23:1" : "Psalm 23:1",
 });
 
-}, [language, fetchData]);
+}, [language]);
 
-/* CLICK HANDLERS */
-
-const handleMessageClick = (msg: Message) => {
-navigate(`/message/${msg.id}`);
-};
-
-const goBack = () => {
-navigate(-1);
-};
-
-/* SEARCH */
+/* ---------------- SEARCH ---------------- */
 
 const filteredMessages = useMemo(() => {
 
-const query = searchQuery.toLowerCase().trim();
+const query = searchQuery.toLowerCase();
+
 if (!query) return messages;
 
-return messages.filter((msg) =>
-msg.title.toLowerCase().includes(query)
+return messages.filter((m) =>
+m.title.toLowerCase().includes(query)
 );
 
 }, [searchQuery, messages]);
 
-/* HOME PAGE */
+/* ---------------- HOME PAGE ---------------- */
 
 const renderHome = (
 
 <div className="px-6 py-4 space-y-8">
 
 {dailyVerse && (
-<div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-lg">
-<h3 className="text-indigo-200 text-xs font-bold uppercase mb-2">
-{t.dailyVerse}
-</h3>
-<p className="text-lg italic">"{dailyVerse.verse}"</p>
-<p className="mt-2 text-sm">— {dailyVerse.reference}</p>
-</div>
-)}
-
-{!searchQuery && playlists.length > 0 && (
-<div className="space-y-4">
-<h3 className="text-lg font-bold">{t.playlists}</h3>
-
-<div className="flex gap-4 overflow-x-auto">
-
-{playlists.map((pl) => (
-<button
-key={pl.id}
-onClick={() => navigate(`/playlist/${pl.id}`)}
-className="w-40"
->
-<img src={pl.thumbnail} className="rounded-xl" alt="" />
-<h4 className="font-bold text-sm mt-2">{pl.title}</h4>
-</button>
-))}
-
-</div>
+<div className="bg-indigo-600 rounded-3xl p-6 text-white">
+<h3 className="text-xs uppercase mb-2">{t.dailyVerse}</h3>
+<p className="italic text-lg">"{dailyVerse.verse}"</p>
+<p className="text-sm mt-2">— {dailyVerse.reference}</p>
 </div>
 )}
 
 <div className="space-y-4">
+
 <h3 className="text-lg font-bold">{t.messages}</h3>
 
 {loading ? (
-<div>{t.loading}</div>
+<div>Loading...</div>
 ) : filteredMessages.map((msg) => (
 
 <button
 key={msg.id}
-onClick={() => handleMessageClick(msg)}
-className="w-full text-left bg-white border rounded-2xl p-4 flex gap-4"
+onClick={() => navigate(`/message/${msg.id}`)}
+className="w-full text-left border rounded-2xl p-4 flex gap-4"
 >
 
-<img src={msg.thumbnail} className="w-16 h-16 rounded-xl" alt="" />
+<img
+src={msg.thumbnail}
+className="w-16 h-16 rounded-xl"
+alt=""
+/>
 
 <div>
 <h4 className="font-bold">{msg.title}</h4>
@@ -186,6 +157,8 @@ className="w-full text-left bg-white border rounded-2xl p-4 flex gap-4"
 </div>
 );
 
+/* ---------------- ROUTES ---------------- */
+
 return (
 
 <Routes>
@@ -196,25 +169,13 @@ element={
 <Layout
 title={t.appTitle}
 latestMessages={messages}
-onMessageClick={(msg) => navigate(`/message/${msg.id}`)}
 searchQuery={searchQuery}
 onSearchChange={setSearchQuery}
+onMessageClick={(msg) =>
+navigate(`/message/${msg.id}`)
+}
 >
 {renderHome}
-</Layout>
-}
-/>
-
-<Route
-path="/playlist/:id"
-element={
-<Layout
-title={t.playlists}
-onBack={goBack}
-latestMessages={messages}
-onMessageClick={(msg) => navigate(`/message/${msg.id}`)}
->
-<PlaylistPage messages={messages} playlists={playlists} />
 </Layout>
 }
 />
@@ -232,56 +193,7 @@ element={<MessagePage messages={messages} />}
 
 };
 
-/* PLAYLIST PAGE */
-
-const PlaylistPage: React.FC<{ messages: Message[]; playlists: Playlist[] }> = ({
-messages,
-playlists,
-}) => {
-
-const { id } = useParams<{ id: string }>();
-const navigate = useNavigate();
-
-const playlist = playlists.find((p) => p.id === id);
-
-if (!playlist) return <div>No Playlist</div>;
-
-const playlistMessages = playlist.messageIds
-.map((id) => messages.find((m) => m.id === id))
-.filter((m): m is Message => m !== undefined);
-
-return (
-
-<div className="px-6 py-4 space-y-4">
-
-<h2 className="text-2xl font-bold">{playlist.title}</h2>
-
-{playlistMessages.map((msg) => (
-
-<button
-key={msg.id}
-onClick={() => navigate(`/message/${msg.id}`)}
-className="w-full text-left bg-white border rounded-xl p-4 flex gap-4"
->
-
-<img src={msg.thumbnail} className="w-14 h-14 rounded-lg" alt="" />
-
-<div>
-<h4 className="font-bold">{msg.title}</h4>
-<p className="text-xs">{msg.duration}</p>
-</div>
-
-</button>
-
-))}
-
-</div>
-
-);
-
-};
-
-/* VIDEO PAGE */
+/* ---------------- MESSAGE PAGE ---------------- */
 
 const MessagePage: React.FC<{ messages: Message[] }> = ({ messages }) => {
 
