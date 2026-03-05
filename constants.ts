@@ -143,7 +143,9 @@ export const MOCK_MESSAGES: Message[] = [
     date: "2024-05-12",
     duration: "45:20",
     videoUrl: "https://youtu.be/3u05__FzYfw?si=OwaxxUyT3dyiPCFH",
+    videoId: "3u05__FzYfw",
     thumbnail: "https://picsum.photos/seed/church1/400/400",
+    createdAt: "2024-05-12T00:00:00Z",
     subMessages: [
       {
         id: "1-1",
@@ -151,7 +153,9 @@ export const MOCK_MESSAGES: Message[] = [
         date: "2024-05-12",
         duration: "22:10",
         videoUrl: "https://youtu.be/3u05__FzYfw?si=OwaxxUyT3dyiPCFH",
+        videoId: "3u05__FzYfw",
         thumbnail: "https://picsum.photos/seed/part1/400/400",
+        createdAt: "2024-05-12T00:00:00Z",
       },
       {
         id: "1-2",
@@ -159,7 +163,9 @@ export const MOCK_MESSAGES: Message[] = [
         date: "2024-05-12",
         duration: "23:10",
         videoUrl: "https://youtu.be/3u05__FzYfw?si=OwaxxUyT3dyiPCFH",
+        videoId: "3u05__FzYfw",
         thumbnail: "https://picsum.photos/seed/part2/400/400",
+        createdAt: "2024-05-12T00:00:00Z",
       }
     ]
   },
@@ -169,7 +175,9 @@ export const MOCK_MESSAGES: Message[] = [
     date: "2024-05-10",
     duration: "38:15",
     videoUrl: "https://youtu.be/3u05__FzYfw?si=OwaxxUyT3dyiPCFH",
+    videoId: "3u05__FzYfw",
     thumbnail: "https://picsum.photos/seed/church2/400/400",
+    createdAt: "2024-05-10T00:00:00Z",
   },
   {
     id: "3",
@@ -178,7 +186,9 @@ export const MOCK_MESSAGES: Message[] = [
     date: "2024-05-08",
     duration: "52:40",
     videoUrl: "https://youtu.be/3u05__FzYfw?si=OwaxxUyT3dyiPCFH",
+    videoId: "3u05__FzYfw",
     thumbnail: "https://picsum.photos/seed/church3/400/400",
+    createdAt: "2024-05-08T00:00:00Z",
     subMessages: [
       {
         id: "3-1",
@@ -186,7 +196,9 @@ export const MOCK_MESSAGES: Message[] = [
         date: "2024-05-08",
         duration: "26:20",
         videoUrl: "https://youtu.be/3u05__FzYfw?si=OwaxxUyT3dyiPCFH",
+        videoId: "3u05__FzYfw",
         thumbnail: "https://picsum.photos/seed/romans1/400/400",
+        createdAt: "2024-05-08T00:00:00Z",
       }
     ]
   }

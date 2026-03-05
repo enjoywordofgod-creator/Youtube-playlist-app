@@ -1,94 +1,98 @@
-import React, { useState } from 'react';
-import { useLanguage } from '../LanguageContext';
-import { Lock } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { supabase } from "../supabase";
+
+interface Playlist {
+id: number;
+playlist_url: string;
+}
 
 const Admin: React.FC = () => {
-  const [apiKey, setApiKey] = useState(localStorage.getItem('YOUTUBE_API_KEY') || '');
-  const [playlistId, setPlaylistId] = useState(localStorage.getItem('PLAYLIST_ID') || '');
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminPassword] = useState('admin123'); // Change this to your actual password
-  const { t, language } = useLanguage();
+const [playlistUrl, setPlaylistUrl] = useState("");
+const [playlists, setPlaylists] = useState<Playlist[]>([]);
 
-  const handleLogin = () => {
-    if (password === adminPassword) {
-      setIsAuthenticated(true);
-    } else {
-      alert(t.invalidPassword);
+const loadPlaylists = async () => {
+  try {
+    const { data } = await supabase
+      .from("playlists")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (data) {
+      setPlaylists(data as Playlist[]);
     }
-  };
+  } catch (err) {
+    console.error("Error loading playlists", err);
+  }
+};
 
-  const handleSave = () => {
-    localStorage.setItem('YOUTUBE_API_KEY', apiKey);
-    localStorage.setItem('PLAYLIST_ID', playlistId);
-    alert(t.save + '!');
-  };
+useEffect(() => {
+loadPlaylists();
+}, []);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md space-y-6">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-              <Lock size={32} />
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-center text-slate-800">{t.login}</h2>
-          <input
-            type="password"
-            placeholder={t.password}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+const addPlaylist = async () => {
+  if (!playlistUrl) return;
+
+  try {
+    await supabase.from("playlists").insert([
+      {
+        playlist_url: playlistUrl,
+      },
+    ]);
+
+    setPlaylistUrl("");
+    loadPlaylists();
+  } catch (err) {
+    console.error("Error adding playlist", err);
+  }
+};
+
+const deletePlaylist = async (id: number) => {
+await supabase.from("playlists").delete().eq("id", id);
+loadPlaylists();
+};
+
+return (
+  <div className="p-6 max-w-xl mx-auto space-y-6">
+    <h1 className="text-3xl font-bold">Admin Panel</h1>
+
+    <div className="space-y-3">
+      <input
+        type="text"
+        placeholder="Paste YouTube Playlist Link"
+        value={playlistUrl}
+        onChange={(e) => setPlaylistUrl(e.target.value)}
+        className="w-full border p-3 rounded-lg"
+      />
+
+      <button
+        onClick={addPlaylist}
+        className="bg-indigo-600 text-white px-6 py-3 rounded-lg w-full"
+      >
+        Add Playlist
+      </button>
+    </div>
+
+    <div className="space-y-3">
+      <h2 className="text-xl font-bold">Playlists</h2>
+
+      {playlists.map((p) => (
+        <div
+          key={p.id}
+          className="flex justify-between items-center border p-3 rounded-lg"
+        >
+          <span className="text-sm break-all">{p.playlist_url}</span>
+
           <button
-            onClick={handleLogin}
-            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+            onClick={() => deletePlaylist(p.id)}
+            className="bg-red-500 text-white px-3 py-1 rounded"
           >
-            {t.login}
+            Delete
           </button>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-slate-800">{t.admin}</h1>
-
-      <div className="bg-white rounded-2xl p-6 space-y-4 shadow-sm border border-slate-200">
-        <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">{t.audioLink}</label>
-          <input
-            type="text"
-            placeholder="YouTube API Key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">{t.playlist}</label>
-          <input
-            type="text"
-            placeholder="Playlist ID"
-            value={playlistId}
-            onChange={(e) => setPlaylistId(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-
-        <button
-          onClick={handleSave}
-          className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          {t.save}
-        </button>
-      </div>
+      ))}
     </div>
-  );
+  </div>
+);
 };
 
 export default Admin;
