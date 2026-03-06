@@ -1,33 +1,36 @@
-import React, { useState } from 'react';
-import { supabase } from './supabase';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { supabase } from "./supabase";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
     if (error) {
-      alert("Error: " + error.message);
+      alert(error.message);
     } else {
-      navigate('/admin');
+      navigate("/admin");
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
-      <h2 style={{ textAlign: 'center' }}>Admin Login</h2>
+    <div style={{ maxWidth: "400px", margin: "100px auto", textAlign: "center" }}>
+      <h2>Admin Login</h2>
 
-      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
 
         <input
           type="email"
-          placeholder="Your Email"
-          style={{ padding: '10px' }}
+          placeholder="Email"
           onChange={(e) => setEmail(e.target.value)}
           required
         />
@@ -35,13 +38,12 @@ const Login = () => {
         <input
           type="password"
           placeholder="Password"
-          style={{ padding: '10px' }}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
 
-        <button type="submit" style={{ padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px' }}>
-          Enter Admin Mode
+        <button type="submit">
+          Login
         </button>
 
       </form>
