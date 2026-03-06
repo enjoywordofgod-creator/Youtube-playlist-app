@@ -10,34 +10,46 @@ import Login from "./Login";
 
 const YOUTUBE_API_KEY = "AIzaSyDYDcdAHtSCudlMcZc82IeMAT3msXnO_2E";
 
-const App = () => {
+const App: React.FC = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadPlaylists = async () => {
-    const { data } = await supabase
-      .from("playlists")
-      .select("*")
-      .order("id", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("playlists")
+        .select("*")
+        .order("id", { ascending: false });
 
-    if (!data || data.length === 0) {
+      if (error) {
+        console.error(error);
+        setLoading(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const playlistUrl = data[0].playlist_url;
+      const match = playlistUrl.match(/list=([^&]+)/);
+
+      if (!match) {
+        setLoading(false);
+        return;
+      }
+
+      const playlistId = match[1];
+      const videos = await fetchYouTubePlaylist(playlistId, YOUTUBE_API_KEY);
+
+      setMessages(videos);
       setLoading(false);
-      return;
-    }
-
-    const playlistUrl = data[0].playlist_url;
-    const match = playlistUrl.match(/list=([^&]+)/);
-
-    if (!match) {
+    } catch (err) {
+      console.error("Error loading playlist:", err);
       setLoading(false);
-      return;
     }
-
-    const playlistId = match[1];
-    const videos = await fetchYouTubePlaylist(playlistId, YOUTUBE_API_KEY);
-    setMessages(videos);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -46,13 +58,16 @@ const App = () => {
 
   return (
     <Routes>
-      {/* Home Route */}
+
+      {/* HOME PAGE */}
       <Route
         path="/"
         element={
           <Layout title="Church Messages">
             {loading ? (
               <div style={{ padding: "40px" }}>Loading...</div>
+            ) : messages.length === 0 ? (
+              <div style={{ padding: "40px" }}>No messages found.</div>
             ) : (
               messages.map((msg) => (
                 <div
@@ -66,7 +81,11 @@ const App = () => {
                     cursor: "pointer",
                   }}
                 >
-                  <img src={msg.thumbnail} style={{ width: "80px", borderRadius: "8px" }} alt="" />
+                  <img
+                    src={msg.thumbnail}
+                    alt={msg.title}
+                    style={{ width: "80px", borderRadius: "8px" }}
+                  />
                   <div>
                     <div style={{ fontWeight: "bold" }}>{msg.title}</div>
                   </div>
@@ -77,10 +96,10 @@ const App = () => {
         }
       />
 
-      {/* Login Route */}
+      {/* LOGIN PAGE */}
       <Route path="/login" element={<Login />} />
 
-      {/* Protected Admin Route */}
+      {/* ADMIN PAGE (PROTECTED) */}
       <Route
         path="/admin"
         element={
@@ -89,6 +108,7 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+
     </Routes>
   );
 };
