@@ -5,8 +5,8 @@ import Admin from "./components/Admin";
 import { supabase } from "./supabase";
 import { fetchYouTubePlaylist } from "./services/youtubeService";
 import { Message } from "./types";
-import { ProtectedRoute } from "./ProtectedRoute";
-import Login from "./Login";
+import { ProtectedRoute } from "./ProtectedRoute.tsx";
+import Login from "./Login.tsx";
 
 const YOUTUBE_API_KEY = "AIzaSyDYDcdAHtSCudlMcZc82IeMAT3msXnO_2E";
 
@@ -17,16 +17,10 @@ const App: React.FC = () => {
 
   const loadPlaylists = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("playlists")
         .select("*")
         .order("id", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        setLoading(false);
-        return;
-      }
 
       if (!data || data.length === 0) {
         setLoading(false);
@@ -47,7 +41,7 @@ const App: React.FC = () => {
       setMessages(videos);
       setLoading(false);
     } catch (err) {
-      console.error("Error loading playlist:", err);
+      console.error(err);
       setLoading(false);
     }
   };
@@ -59,15 +53,12 @@ const App: React.FC = () => {
   return (
     <Routes>
 
-      {/* HOME PAGE */}
       <Route
         path="/"
         element={
           <Layout title="Church Messages">
             {loading ? (
               <div style={{ padding: "40px" }}>Loading...</div>
-            ) : messages.length === 0 ? (
-              <div style={{ padding: "40px" }}>No messages found.</div>
             ) : (
               messages.map((msg) => (
                 <div
@@ -78,13 +69,13 @@ const App: React.FC = () => {
                     gap: "12px",
                     padding: "12px",
                     borderBottom: "1px solid #eee",
-                    cursor: "pointer",
+                    cursor: "pointer"
                   }}
                 >
                   <img
                     src={msg.thumbnail}
-                    alt={msg.title}
                     style={{ width: "80px", borderRadius: "8px" }}
+                    alt=""
                   />
                   <div>
                     <div style={{ fontWeight: "bold" }}>{msg.title}</div>
@@ -96,10 +87,8 @@ const App: React.FC = () => {
         }
       />
 
-      {/* LOGIN PAGE */}
       <Route path="/login" element={<Login />} />
 
-      {/* ADMIN PAGE (PROTECTED) */}
       <Route
         path="/admin"
         element={
